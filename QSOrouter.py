@@ -14,10 +14,10 @@ several outputs at once:
   * ADIF file           - append every logged QSO to a local .adi file
 
 Only standard library is used (tkinter, socket, ssl, json). Config is saved to
-WsjtxLogRouter.json next to this script.
+QSOrouter.json next to this script.
 
 Usage:
-    python3 WsjtxLogRouter.py
+    python3 QSOrouter.py
 """
 
 import json
@@ -43,9 +43,9 @@ if getattr(sys, "frozen", False):
     _BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
 else:
     _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(_BASE_DIR, "WsjtxLogRouter.json")
+CONFIG_FILE = os.path.join(_BASE_DIR, "QSOrouter.json")
 
-LOG_FILE = os.path.join(_BASE_DIR, "WsjtxLogRouter.log")
+LOG_FILE = os.path.join(_BASE_DIR, "QSOrouter.log")
 MAGIC = 0xADBCCBDA
 
 
@@ -482,7 +482,7 @@ def encode_n1mm_contactinfo(qso):
         return f"<{name}>{xml_escape('' if value is None else str(value))}</{name}>"
 
     parts = [
-        tag("app", "WsjtxLogRouter"),
+        tag("app", "QSOrouter"),
         tag("timestamp", ts),
         tag("mycall", qso.get("my_callsign", "")),
         tag("band", (qso.get("band") or "").rstrip("Mm")),
@@ -932,7 +932,7 @@ class Router:
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title(f"WSJT-X Multi-Logger Router v{__version__}")
+        self.root.title(f"QSOrouter v{__version__}")
         self.log_q = queue.Queue()
         self.qso_q = queue.Queue()
         self.router = Router(self.log_q.put, self.qso_q.put)

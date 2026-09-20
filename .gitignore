@@ -1,8 +1,8 @@
 __pycache__/
 *.pyc
 *.log
-WsjtxLogRouter.json
+QSOrouter.json
 build/
 dist/
-WsjtxLogRouter.exe
+QSOrouter.exe
 *conflicted copy*

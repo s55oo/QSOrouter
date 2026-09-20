@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['WsjtxLogRouter.py'],
+    ['QSOrouter.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -20,7 +20,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='WsjtxLogRouter',
+    name='QSOrouter',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -34,5 +34,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     manifest='manifest.xml',
-    icon=['WsjtxLogRouter.ico'],
+    icon=['QSOrouter.ico'],
 )

@@ -1,4 +1,4 @@
-# WsjtxLogRouter
+# QSOrouter
 
 A small, dependency-free GUI router for amateur radio logging. It listens for
 QSO events emitted over UDP by **WSJT-X**, **N1MM Logger+** and **DXLog** and
@@ -15,11 +15,11 @@ Runs on stock Python 3 only (tkinter, socket, ssl, json). No third-party
 packages.
 
 ```
-WsjtxLogRouter.py   main program (GUI)
-WsjtxLogRouter.exe  standalone executable (bundles Python/Tk; build with the .spec)
-WsjtxLogRouter.json configuration (auto-loaded on start)
-WsjtxLogRouter.log  activity log (written by the router engine)
-WsjtxLogRouter.spec PyInstaller build file (+ manifest.xml)
+QSOrouter.py   main program (GUI)
+QSOrouter.exe  standalone executable (bundles Python/Tk; build with the .spec)
+QSOrouter.json configuration (auto-loaded on start)
+QSOrouter.log  activity log (written by the router engine)
+QSOrouter.spec PyInstaller build file (+ manifest.xml)
 docs/               screenshots used by this README
 ```
 
@@ -131,7 +131,7 @@ it to **Private**, or add an explicit inbound rule for the port.
 
 If the packet demonstrably arrives (Wireshark) but HRD still won't show
 it even with firewall ruled out, the fallback is a relay: run a second,
-minimal instance of WsjtxLogRouter **on the HRD PC** with an `n1mm` input
+minimal instance of QSOrouter **on the HRD PC** with an `n1mm` input
 bound to `0.0.0.0` on some free port (receives the forwarded packet) and
 an `hrd` output pointed at `127.0.0.1:2333` (guaranteed-loopback, same PC
 as HRD) — but this shouldn't normally be necessary.
@@ -158,7 +158,7 @@ show up in the minimal bar immediately, and the minimal window resizes
 itself if the number of outputs changes.
 
 - **All times shown anywhere in the app** (the last-QSO time, the activity
-  log, `WsjtxLogRouter.log`) **are UTC/GMT**, regardless of the PC's own
+  log, `QSOrouter.log`) **are UTC/GMT**, regardless of the PC's own
   timezone — hams log in UTC, so the router never shows local time.
 
 - **Status dot** per destination: green ● once an HTTP output's last POST
@@ -171,7 +171,7 @@ itself if the number of outputs changes.
 - **Outputs** tab (Details view): Add/Edit/Remove. The table shows `Type`,
   `Target`, the status dot and `Last call` — the callsign of the most
   recent QSO dispatched to that destination.
-- **Save config** writes `WsjtxLogRouter.json`.
+- **Save config** writes `QSOrouter.json`.
 - Start button turns green while running, Stop button turns red while stopped.
 
 ### Via the JSON file
@@ -219,22 +219,22 @@ Example:
 ## Running it
 
 ```bat
-WsjtxLogRouter.exe          # standalone executable (no Python needed)
+QSOrouter.exe          # standalone executable (no Python needed)
 :: or from source:
-python WsjtxLogRouter.py
+python QSOrouter.py
 ```
 
 - **Auto-start on launch:** the router starts listening ~100 ms after the
   window opens (no need to click Start).
-- **Autostart with Windows:** a shortcut named `WsjtxLogRouter.lnk` in the
+- **Autostart with Windows:** a shortcut named `QSOrouter.lnk` in the
   Startup folder (`shell:startup`) launches the EXE at login. Remove the
-  shortcut to disable autostart. The EXE and `WsjtxLogRouter.json` must stay
+  shortcut to disable autostart. The EXE and `QSOrouter.json` must stay
   in the same folder (config is read/written next to the program).
 - **Building the EXE** (PyInstaller is already installed):
 
   ```bat
-  python -m PyInstaller --clean --noconfirm WsjtxLogRouter.spec
-  copy /Y dist\WsjtxLogRouter.exe WsjtxLogRouter.exe
+  python -m PyInstaller --clean --noconfirm QSOrouter.spec
+  copy /Y dist\QSOrouter.exe QSOrouter.exe
   ```
 
   The spec produces a single windowed EXE with the manifest embedded;
@@ -263,14 +263,14 @@ python WsjtxLogRouter.py
   deduplicated correctly.
 - **ADIF output quality:** QSOs are enriched with `BAND` (derived from
   frequency) and `TX_PWR` (from WSJT-X `tx_pwr`) before dispatch.
-- **Logging:** every event/error is written to `WsjtxLogRouter.log`
+- **Logging:** every event/error is written to `QSOrouter.log`
   (input datagrams, QSO dispatches, HTTP POST results, GUI errors).
 
 ## Troubleshooting
 
 - **QSO appears in QLog but not in Wavelog/CQ Radio:** you are running an
   old version of the router (the WSJT-X 3.x type-number fix is required).
-  Check `WsjtxLogRouter.log` for `QSO logged` / `-> logged` lines.
+  Check `QSOrouter.log` for `QSO logged` / `-> logged` lines.
 - **Nothing is received:** confirm WSJT-X Reporting is enabled with the UDP
   server set to `127.0.0.1:2237`, and that the router shows green Start.
 - **Every QSO posts twice to Wavelog/CQ Radio/HTTP:** fixed in 1.2.0 (see
@@ -281,7 +281,7 @@ python WsjtxLogRouter.py
   SUBMODE=FT4`, which didn't match the plain `FT4` the binary `QSOLogged`
   message reports, letting the pair slip past dedup — update if you're on
   an older build.
-- **HRD never receives anything:** check `WsjtxLogRouter.log` for
+- **HRD never receives anything:** check `QSOrouter.log` for
   `Output: HRD '<name>' -> host:port` at startup (confirms the output is
   configured) — the `hrd` output is fire-and-forget UDP, so there is no
   error logged if nothing is listening on the other end. If the packet
@@ -292,9 +292,9 @@ python WsjtxLogRouter.py
   packet without it even though the socket receives it fine. If HRD is on
   a different PC, see "Ham Radio Deluxe" above for the network side.
 - **A destination's status dot stays red:** an HTTP output's last POST
-  failed; check `WsjtxLogRouter.log` for the `HTTP ERROR '<name>': ...`
+  failed; check `QSOrouter.log` for the `HTTP ERROR '<name>': ...`
   line for the actual response/reason.
-- **An output you hand-edited into `WsjtxLogRouter.json` disappears again:**
+- **An output you hand-edited into `QSOrouter.json` disappears again:**
   fixed in 1.4.1. Before 1.4.1, closing the app always overwrote the config
   file with whatever was in memory when it started — so a hand edit made
   while the app was (or had been) running got silently discarded the next
@@ -317,7 +317,7 @@ python WsjtxLogRouter.py
   listener thread log a `WARNING` and reopen its socket in place if it ever
   breaks for any other reason, instead of dying quietly. Look for
   `WARNING: ... socket on port ... broke (...); reopening` in
-  `WsjtxLogRouter.log` if this ever fires.
+  `QSOrouter.log` if this ever fires.
 - **The app opens Stopped instead of auto-starting like it always used
   to:** this was a regression in 1.4.5, fixed in 1.4.6. The 1.4.4 fix above
   tried to disable `SIO_UDP_CONNRESET` via `socket.ioctl()`, but Python's
@@ -331,7 +331,7 @@ python WsjtxLogRouter.py
   future startup exception instead of leaving the app looking idle with no
   explanation.
 - **All GUI errors** (e.g. a bad config) are captured to
-  `WsjtxLogRouter.log` — the app runs headless under `pythonw.exe` and has
+  `QSOrouter.log` — the app runs headless under `pythonw.exe` and has
   no console to print to.
 
 73 de S55OO
