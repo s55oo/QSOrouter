@@ -237,7 +237,18 @@ python QSOrouter.py
   copy /Y dist\QSOrouter.exe QSOrouter.exe
   ```
 
-  The spec produces a single windowed EXE with the manifest embedded;
+  The spec produces a single windowed EXE with the manifest embedded.
+
+- **Antivirus false positives:** a locally-built EXE can get flagged by
+  Windows Defender / other AV engines — PyInstaller's prebuilt bootloader
+  and UPX-compressed binaries are both common heuristic triggers, even
+  though the EXE is clean. The spec already disables UPX
+  (`upx=False`), and the released EXE is built by the
+  [**Build QSOrouter.exe**](.github/workflows/build-exe.yml) GitHub Actions
+  workflow, which compiles the PyInstaller bootloader **from source** on a
+  clean Windows runner — the actual fix for the prebuilt-bootloader
+  fingerprint — and runs a Defender scan on the fresh build as a sanity
+  check. Prefer a release download over a local build if AV flags one.
 
 ## Notes / behaviour
 
