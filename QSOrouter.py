@@ -41,7 +41,7 @@ from datetime import datetime, date, timedelta, timezone
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-__version__ = "1.5.3"
+__version__ = "1.5.4"
 
 if getattr(sys, "frozen", False):
     _BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
@@ -1013,7 +1013,7 @@ class App:
         tk.Label(row1, text="Last:").pack(side="left")
         tk.Label(row1, textvariable=self.min_last_var,
                  font=("Segoe UI", 9, "bold")).pack(side="left", padx=(4, 0))
-        tk.Label(row1, textvariable=self.min_time_var, foreground="#666666",
+        tk.Label(row1, textvariable=self.min_time_var,
                  font=("Segoe UI", 9, "bold")).pack(side="left", padx=(8, 0))
 
         row2 = ttk.Frame(f)

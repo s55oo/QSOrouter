@@ -263,9 +263,18 @@ python QSOrouter.py
   workflow, which compiles the PyInstaller bootloader **from source** on a
   clean Windows runner — the actual fix for the prebuilt-bootloader
   fingerprint — and runs a Defender scan on the fresh build as a sanity
-  check. If AV flags a local build, use the CI-built EXE instead (download
-  it from the workflow run's artifacts, or from a GitHub release when one
-  has been published).
+  check. If AV flags a local build, use the CI-built EXE from the
+  [Releases](https://github.com/s55oo/QSOrouter/releases) page instead.
+
+- **Making a release:** bump `__version__` in `QSOrouter.py`, commit, then
+  push a matching tag (`git tag v1.5.4` / `git push origin v1.5.4`). The
+  workflow builds the EXE and publishes it as a GitHub release for that
+  tag automatically, with notes generated from the commits since the
+  previous tag. To get the new EXE onto a PC:
+
+  ```powershell
+  gh release download -R s55oo/QSOrouter --pattern QSOrouter.exe --clobber
+  ```
 
 ## Notes / behaviour
 
