@@ -155,7 +155,8 @@ now appear in HRD automatically alongside Wavelog and CQ Radio.
 ![Minimal view](docs/minimal-view.png)
 
 The window opens in a **minimal view**: a compact two-line bar with the
-Running/Stopped state, Start/Stop, the last QSO logged (callsign + time),
+Running/Stopped state, Start/Stop, the last QSO logged (callsign + UTC
+time, both in bold),
 and one small status dot + name per configured output — no tables, no
 column headers, the window sized to just fit it. Click **Details ▸** to
 switch to the full view with editable Inputs/Outputs tables and the
@@ -330,6 +331,10 @@ python QSOrouter.py
   exactly as it was at launch; otherwise it skips the save (logging why)
   and leaves your edit alone. Only edit the JSON file while the app is
   fully closed, or make the change through the GUI instead.
+- **GUI edits made after clicking Save config are not saved on close:**
+  fixed in 1.5.3. Save config now also updates the baseline that the
+  close-time check above compares against, so later GUI edits are
+  auto-saved on close again.
 - **An input silently stops receiving after running unattended for a long
   time (e.g. overnight), with no error shown, and needs an app restart to
   recover:** fixed in 1.4.4. On Windows, a UDP socket that forwards a
