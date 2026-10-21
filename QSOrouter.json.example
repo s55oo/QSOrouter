@@ -3,6 +3,10 @@
     {
       "type": "wsjtx",
       "port": 2237
+    },
+    {
+      "type": "n1mm",
+      "port": 12060
     }
   ],
   "outputs": [

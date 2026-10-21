@@ -15,32 +15,39 @@ Runs on stock Python 3 only (tkinter, socket, ssl, json). No third-party
 packages.
 
 ```
-QSOrouter.py   main program (GUI)
-QSOrouter.exe  standalone executable (bundles Python/Tk; build with the .spec)
-QSOrouter.json configuration (auto-loaded on start)
-QSOrouter.log  activity log (written by the router engine)
-QSOrouter.spec PyInstaller build file (+ manifest.xml)
-docs/               screenshots used by this README
+QSOrouter.py            main program (GUI)
+QSOrouter.exe           standalone executable (bundles Python/Tk; build with the .spec)
+QSOrouter.json          configuration (auto-loaded on start; not in git)
+QSOrouter.json.example  sample configuration to copy to QSOrouter.json
+QSOrouter.log           activity log (written by the router engine)
+QSOrouter.spec          PyInstaller build file
+manifest.xml            Windows manifest embedded by the .spec
+QSOrouter.ico           application icon
+.github/workflows/      CI build of QSOrouter.exe
+docs/                   screenshots used by this README
 ```
 
 ## How it works
 
-                   ┌──────────────────────┐
-    WSJT-X  UDP ──►│ 127.0.0.1:2237       │
-                   │   (binary WSJT-X     │
-                   │    UDP protocol)     │
-    N1MM+/DXLog UDP ►│ 0.0.0.0:12060       │  Router (this app)
-                   │   (N1MM-style XML     │
-                   │    broadcasts)        │
-                   └──────────┬───────────┘
-                              │ decodes both protocols into ADIF
-                              ▼
-              ┌───────────────┼───────────────┬────────────────┐
+```
+                        ┌──────────────────────┐
+    WSJT-X UDP ────────►│ 127.0.0.1:2237       │
+                        │  (binary WSJT-X      │
+                        │   UDP protocol)      │
+                        │                      │  Router (this app)
+    N1MM+/DXLog UDP ───►│ 0.0.0.0:12060        │
+                        │  (N1MM-style XML     │
+                        │   broadcasts)        │
+                        └──────────┬───────────┘
+                                   │ decodes both protocols into ADIF
+                                   ▼
+              ┌───────────────┬────┴──────────┬────────────────┐
               ▼               ▼               ▼                ▼
         UDP forward      HRD output     HTTP outputs        ADIF file
         (raw datagrams)  (N1MM XML,       │      │
-                          synthesised)     ▼      ▼
-                                       Wavelog  CQ Radio / generic HTTP
+                          synthesised)    ▼      ▼
+                                      Wavelog  CQ Radio / generic HTTP
+```
 
 - **WSJT-X input (port 2237):** decodes the WSJT-X binary UDP protocol
   (`magic 0xADBCCBDA`, schema-2/schema-3, message types). Only QSO events
@@ -161,10 +168,12 @@ itself if the number of outputs changes.
   log, `QSOrouter.log`) **are UTC/GMT**, regardless of the PC's own
   timezone — hams log in UTC, so the router never shows local time.
 
-- **Status dot** per destination: green ● once an HTTP output's last POST
-  actually succeeded, red ● once it failed (checked against the real HTTP
-  response, not just "a send was attempted"), gray ○ for UDP/ADIF outputs
-  (fire-and-forget — there is no delivery confirmation to check).
+- **Status dot** per destination: green once an HTTP output's last POST
+  actually succeeded, red once it failed (checked against the real HTTP
+  response, not just "a send was attempted"), dark gray for UDP, HRD and
+  ADIF outputs once a QSO has been sent (fire-and-forget — there is no
+  delivery confirmation to check). Every dot starts light gray until the
+  first QSO reaches that destination.
 - **Inputs** tab (Details view): add/remove UDP listen ports (`WSJTX`
   default 2237, `N1MM` default 12060 — the N1MM input also receives DXLog,
   which speaks the same XML broadcast).
@@ -176,17 +185,20 @@ itself if the number of outputs changes.
 
 ### Via the JSON file
 
-`outputs[]` entries (edit the file, then restart the app — the GUI only
-reads the file at launch):
+`outputs[]` entries (close the app, edit the file, then start it again —
+the GUI only reads the file at launch). Every output also takes an optional
+`name`, the label shown in the minimal view (defaults to the target).
+Inputs are `{ "type": "wsjtx" | "n1mm", "port": N }`; `"dxlog"` is accepted
+as an alias for `n1mm`.
 
 | type | fields | behaviour |
 |------|--------|-----------|
 | `udp`   | `host`, `port` | raw datagram mirror to host:port (e.g. QLog `127.0.0.1:2240`); for N1MM/DXLog QSOs a synthesized WSJT-X `QSOLogged` packet is sent instead |
-| `hrd`   | `host`, `port` | every logged QSO (from *any* input) re-encoded as an N1MM-style `<contactinfo>` UDP broadcast, for Ham Radio Deluxe Logbook's **QSO Forwarding → UDP Receive** (default port `2333`) — see "Ham Radio Deluxe" below |
+| `hrd`   | `host`, `port` | every logged QSO (from *any* input) re-encoded as an N1MM-style `<contactinfo>` UDP broadcast, for Ham Radio Deluxe Logbook's **QSO Forwarding → UDP Receive** (default port `2333`) — see "Ham Radio Deluxe" above |
 | `wavelog` | `url`, `key`, `station` | POST `{type:"adif", string, key, station_profile_id}` to the Wavelog v1 API (`.../index.php/api/qso`); logs the HTTP status/body |
 | `cqradio` | `url`, `key` | POST the QSO dict as JSON to logbook.cqradio.org (`Authorization: Bearer` + `X-API-KEY`) |
 | `http`  | `url`, `key` | POST the raw ADIF text (`Content-Type: text/adif`) to any API |
-| `adif`  | `path` | append every logged QSO to a local `.adi` file |
+| `adif`  | `path` | append every logged QSO to a local `.adi` file (only one `adif` output is used; if several are listed, the last one wins) |
 
 Example:
 
@@ -219,20 +231,22 @@ Example:
 ## Running it
 
 ```bat
-QSOrouter.exe          # standalone executable (no Python needed)
+:: standalone executable (no Python needed)
+QSOrouter.exe
 :: or from source:
 python QSOrouter.py
 ```
 
 - **Auto-start on launch:** the router starts listening ~100 ms after the
   window opens (no need to click Start).
-- **Autostart with Windows:** a shortcut named `QSOrouter.lnk` in the
-  Startup folder (`shell:startup`) launches the EXE at login. Remove the
-  shortcut to disable autostart. The EXE and `QSOrouter.json` must stay
+- **Autostart with Windows:** create a shortcut to `QSOrouter.exe` in the
+  Startup folder (press Win+R, type `shell:startup`) and it launches at
+  login. Delete the shortcut to disable autostart. The EXE and `QSOrouter.json` must stay
   in the same folder (config is read/written next to the program).
-- **Building the EXE** (PyInstaller is already installed):
+- **Building the EXE locally:**
 
   ```bat
+  python -m pip install pyinstaller
   python -m PyInstaller --clean --noconfirm QSOrouter.spec
   copy /Y dist\QSOrouter.exe QSOrouter.exe
   ```
@@ -248,7 +262,9 @@ python QSOrouter.py
   workflow, which compiles the PyInstaller bootloader **from source** on a
   clean Windows runner — the actual fix for the prebuilt-bootloader
   fingerprint — and runs a Defender scan on the fresh build as a sanity
-  check. Prefer a release download over a local build if AV flags one.
+  check. If AV flags a local build, use the CI-built EXE instead (download
+  it from the workflow run's artifacts, or from a GitHub release when one
+  has been published).
 
 ## Notes / behaviour
 
@@ -279,8 +295,9 @@ python QSOrouter.py
 
 ## Troubleshooting
 
-- **QSO appears in QLog but not in Wavelog/CQ Radio:** you are running an
-  old version of the router (the WSJT-X 3.x type-number fix is required).
+- **QSO appears in QLog but not in Wavelog/CQ Radio:** you are running a
+  pre-1.0 build of the router (the WSJT-X 3.x type-number fix is required —
+  see Notes above).
   Check `QSOrouter.log` for `QSO logged` / `-> logged` lines.
 - **Nothing is received:** confirm WSJT-X Reporting is enabled with the UDP
   server set to `127.0.0.1:2237`, and that the router shows green Start.

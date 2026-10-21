@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-WSJT-X Multi-Logger Router (GUI)
-=================================
-Listen on one or more localhost UDP ports for WSJT-X, then route each event to
-several outputs at once:
+QSOrouter (GUI)
+===============
+Listen for QSO events over UDP from WSJT-X (binary protocol, 127.0.0.1) and
+from N1MM Logger+ / DXLog (N1MM-style XML broadcasts, 0.0.0.0), then route
+each logged QSO to several outputs at once:
 
-  * UDP forward hosts   - raw datagrams to GridTracker, Hamclock, N1MM+,
-                          WRL, etc. (bidirectional, replies rout back to WSJT-X)
+  * UDP forward hosts   - raw datagrams to QLog, GridTracker, JTAlert, WRL,
+                          etc. (bidirectional, replies routed back to WSJT-X);
+                          N1MM/DXLog QSOs are sent as synthesized WSJT-X
+                          QSOLogged packets
   * HRD output          - QSOs re-encoded as N1MM-style UDP broadcasts for
                           Ham Radio Deluxe Logbook's QSO Forwarding
+  * Wavelog             - logged QSOs as ADIF to the Wavelog v1 API
   * CQ Radio HTTP       - logged QSOs as JSON to logbook.cqradio.org
   * Generic HTTP ADIF   - logged QSOs as raw ADIF POST to any API
   * ADIF file           - append every logged QSO to a local .adi file
@@ -947,7 +951,8 @@ class App:
         self.messagebox = messagebox
 
         self.status_var = tk.StringVar(value="Idle")
-        self.min_last_var = tk.StringVar(value="Last: \u2014")
+        self.min_last_var = tk.StringVar(value="\u2014")
+        self.min_time_var = tk.StringVar(value="")
         # Start/Stop/status-dot/Details-toggle each exist twice (once in the
         # compact minimal bar, once in the detailed header) since only one
         # of those two frames is packed at a time - these lists let
@@ -1005,7 +1010,11 @@ class App:
         start, stop = self._make_start_stop(row1)
         start.pack(side="left")
         stop.pack(side="left", padx=(4, 10))
-        tk.Label(row1, textvariable=self.min_last_var, foreground="#666666").pack(side="left")
+        tk.Label(row1, text="Last:").pack(side="left")
+        tk.Label(row1, textvariable=self.min_last_var,
+                 font=("Segoe UI", 9, "bold")).pack(side="left", padx=(4, 0))
+        tk.Label(row1, textvariable=self.min_time_var, foreground="#666666",
+                 font=("Segoe UI", 9, "bold")).pack(side="left", padx=(8, 0))
 
         row2 = ttk.Frame(f)
         row2.pack(fill="x", pady=(6, 0))
@@ -1114,7 +1123,8 @@ class App:
                 key, call, status = item
                 if call:
                     self._last_calls[key] = call
-                    self.min_last_var.set(f"Last: {call}   {_utc_now_short()}")
+                    self.min_last_var.set(call)
+                    self.min_time_var.set(_utc_now_short())
                 if status:
                     self._last_status[key] = status
                 self._apply_last(key, call, status)
@@ -1160,8 +1170,13 @@ class App:
             self._cfg = {"inputs": [2237], "outputs": []}
 
     def save_config(self):
+        cfg = self.cfg()
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(self.cfg(), f, indent=2)
+            json.dump(cfg, f, indent=2)
+        # The file on disk now matches what we just wrote - make that the
+        # baseline on_close() compares against, so GUI edits made after a
+        # Save config are still auto-saved on close.
+        self._cfg = cfg
 
     def on_save(self):
         self.save_config()
